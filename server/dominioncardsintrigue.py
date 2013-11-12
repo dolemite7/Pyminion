@@ -1,4 +1,4 @@
-#15/25
+#Intrigue: 15/25 complete
 
 class BaronCard(KingdomCard):
 	#cardSet = "Intrigue"
@@ -22,21 +22,64 @@ class BaronCard(KingdomCard):
 				if choice.lower() not in ['y', 'n']:
 					continue
 				elif choice.lower() == 'y':
-					while True:
-						for card in self.player.playerHand:
-							if card.cardName == 'Estate':
-								self.player.playerDiscard.append(self.player.playerHand[card])
-								del self.player.playerHand[card]
-								self.player.playerTurnTreasure += 4
-								break
-					break
+					for card in self.player.playerHand:
+						if card.cardName == 'Estate':
+							self.player.playerDiscard.append(self.player.playerHand[card])
+							del self.player.playerHand[card]
+							self.player.playerTurnTreasure += 4
+							break
 				elif choice.lower() == 'n':
 					break
 		else:
 			self.player.playerDiscard.append(self.deck.estateCards[0])
 			return				
 
-class Courtyard(KingdomCard):
+class BridgeCard(KingdomCard):
+	#cardSet = "Intrigue"
+	cardEval = "BridgeCard"
+	cardName = "Bridge"
+	cardColor = "\033[0m"
+	description = "+1 Coin, +1 Buy. All cards (including cards in players’ hands) cost 1 Coin less this turn, but no less than 0 Coin."
+	cost = 4
+	action = True
+	def __init__(self):
+		pass
+
+	def playCard(self, player, roster, deck):
+		self.player = player
+		self.player.drawOneCard()
+		self.player.playerTurnTreasure += 1
+		
+class ConspiratorCard(KingdomCard):
+	#cardSet = "Intrigue"
+	cardEval = "ConspiratorCard"
+	cardName = "Conspirator"
+	cardColor = "\033[0m"
+	description = "+2 Coin. If you played 3 or more Actions this turn (counting this): +1 Card, +1 Action"
+	cost = 4
+	action = True
+	def __init__(self):
+		pass
+
+	def playCard(self, player, roster, deck):
+		self.player = player
+		self.player.playerTurnTreasure += 2
+
+class CoppersmithCard(KingdomCard):
+	#cardSet = "Intrigue"
+	cardEval = "CoppersmithCard"
+	cardName = "Coppersmith"
+	cardColor = "\033[0m"
+	description = "Copper produces an extra +1 Coin this turn."
+	cost = 4
+	action = True
+	def __init__(self):
+		pass
+
+	def playCard(self, player, roster, deck):
+		self.player = player
+			
+class CourtyardCard(KingdomCard):
 	#cardSet = "Intrigue"
 	cardEval = "CourtyardCard"
 	cardName = "Courtyard"
@@ -93,7 +136,6 @@ class GreatHallCard(KingdomCard):
 		self.deck = deck
 		self.player.drawOneCard()
 		self.player.playerTurnActions += 1
-
 
 class HaremCard(KingdomCard):
 	#cardSet = "Intrigue"
@@ -174,6 +216,22 @@ class IronWorksCard(KingdomCard):
 					break
 			break
 			return
+
+class MasqueradeCard(KingdomCard):
+	#cardSet = "Intrigue"
+	cardEval = "MasqueradeCard"
+	cardName = "Masquerade"
+	cardColor = "\033[0m"
+	description = "+2 Cards. Each player passes a card from his hand to the left at once. Then you may trash a card from your hand."
+	cost = 3
+	action = True
+	def __init__(self):
+		pass
+
+	def playCard(self, player, roster, deck):
+		self.player = player
+		for i in range(2):
+			self.player.drawOneCard()
 			
 class MiningVillageCard(KingdomCard):
 	#cardSet = "Intrigue"
@@ -359,7 +417,54 @@ class PawnCard(KingdomCard):
 				elif choice2.lower() == 'o':
 					self.player.playerTurnTreasure += 1
 				break
-				
+
+class SaboteurCard(KingdomCard):
+	#cardSet = "Intrigue"
+	cardEval = "SaboteurCard"
+	cardName = "Saboteur"
+	cardColor = "\033[1;31m"
+	description = "Each other player reveals cards from the top of his deck until revealing one costing 3 Coins or more. He trashes that card and may gain a card costing at most 2 Coins less than it. He discards the other revealed cards."
+	cost = 5
+	action = True
+	attack = True
+	def __init__(self):
+		pass
+
+	def playCard(self, player, roster, deck):
+		self.player = player
+
+class ScoutCard(KingdomCard):
+	#cardSet = "Intrigue"
+	cardEval = "ScoutCard"
+	cardName = "Scout"
+	cardColor = "\033[0m"
+	description = "Reveal the top 4 cards of your deck. Put the revealed Victory cards into your hand. Put the other cards on top your deck in any order."
+	cost = 4
+	action = True
+	def __init__(self):
+		pass
+
+	def playCard(self, player, roster, deck):
+		self.player = player
+
+class SecretChamberCard(KingdomCard):
+	#cardSet = "Intrigue"
+	cardEval = "SecretChamberCard"
+	cardName = "Secret Chamber"
+	cardColor = "\033[36m"
+	description = "[Action]: Discard any number of cards. +1 Coin for per card discarded. [Reaction]: When another player plays an Attack card, you may reveal this from your hand. If you do, +2 Cards, then put 2 cards from your hand on top of your deck."
+	cost = 2
+	action = True
+	reaction = True
+	def __init__(self):
+		pass
+
+	def playCard(self, player, roster, deck):
+		self.player = player
+
+	def reactCard(self, player, roster, type):
+		self.type = type
+			
 class ShantyTownCard(KingdomCard):
 	#cardSet = "Intrigue"
 	cardEval = "ShantyTownCard"
@@ -376,7 +481,7 @@ class ShantyTownCard(KingdomCard):
 		self.player.playerTurnActions += 2
 		self.hasActions = False
 		for card in self.player.playerHand:
-			self.reveal.append("\n " + self.playerName + " reveals " + self.playerHand[card].cardName + ".")
+			self.reveal.append("\n " + self.playerName + " reveals " + card.cardName + ".")
 			if card.cardType == 'Action':
 				self.hasActions = True
 				break
@@ -430,7 +535,42 @@ class StewardCard(KingdomCard):
 								break
 				break
 
-class TradingPost(KingdomCard):
+class SwindlerCard(KingdomCard):
+	#cardSet = "Intrigue"
+	cardEval = "SwindlerCard"
+	cardName = "Swindler"
+	cardColor = "\033[1;31m"
+	description = "+2 Coin. Each other player trashes the top card of his deck and gains a card of the same cost that you choose."
+	cost = 3
+	action = True
+	attack = True
+	def __init__(self):
+		pass
+
+	def playCard(self, player, roster, deck):
+		self.player = player
+		self.deck = deck
+		self.player.playerTurnTreasure += 2	
+		
+class TorturerCard(KingdomCard):
+	#cardSet = "Intrigue"
+	cardEval = "TorturerCard"
+	cardName = "Torturer"
+	cardColor = "\033[1;31m"
+	description = "+3 Cards. Each other player chooses one: he discards 2 cards, or he gains a Curse card, putting it in his hand."
+	cost = 5
+	action = True
+	attack = True
+	def __init__(self):
+		pass
+
+	def playCard(self, player, roster, deck):
+		self.player = player
+		self.deck = deck
+		for i in range(3):
+			self.player.drawOneCard()
+				
+class TradingPostCard(KingdomCard):
 	#cardSet = "Intrigue"
 	cardEval = "TradingPostCard"
 	cardName = "Trading Post"
@@ -472,6 +612,21 @@ class TradingPost(KingdomCard):
 						self.player.gainCard(value, 1, 'hand', 'treasure')
 						
 				break
+
+class TributeCard(KingdomCard):
+	#cardSet = "Intrigue"
+	cardEval = "TributeCard"
+	cardName = "Tribute
+	cardColor = "\033[0m"
+	description = "The player to your left reveals and then discards the top 2 cards of his deck. For each different named card revealed, if it an... Action card, +2 Actions; Treasure card, +2 Coins; Victory Card, +2 Cards."
+	cost = 5
+	action = True
+	def __init__(self):
+		pass
+
+	def playCard(self, player, roster, deck):
+		self.player = player
+		self.deck = deck
 				
 class UpgradeCard(KingdomCard):
 	#cardSet = "Intrigue"
@@ -567,5 +722,3 @@ class WishingWellCard(KingdomCard):
 					break
 			break
 			
-		
-
