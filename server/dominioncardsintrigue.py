@@ -5,7 +5,7 @@ class BaronCard(KingdomCard):
 	cardEval = "BaronCard"
 	cardName = "Baron"
 	cardColor = "\033[0m"
-	description = "You may discard an estate card. If you do, +4 Coin. Otherwise, gain an estate card."
+	description = "+1 Buy. You may discard an estate card. If you do, +4 Coin. Otherwise, gain an estate card."
 	cost = 4
 	action = True
 	def __init__(self):
@@ -13,6 +13,7 @@ class BaronCard(KingdomCard):
 
 	def playCard(self, player, roster, deck):
 		self.player = player
+		self.player.playerTurnBuys += 1		
 		if any(i.cardName == 'Estate' for i in self.player.playerHand):
 			while True:
 				#choice = raw_input(" Would you like to discard an Estate (y/n)? ")
@@ -28,6 +29,7 @@ class BaronCard(KingdomCard):
 								del self.player.playerHand[card]
 								self.player.playerTurnTreasure += 4
 								break
+					break
 				elif choice.lower() == 'n':
 					break
 		else:
@@ -39,7 +41,7 @@ class Courtyard(KingdomCard):
 	cardEval = "CourtyardCard"
 	cardName = "Courtyard"
 	cardColor = "\033[0m"
-	description = "Put a card from your hand on top of your deck."
+	description = "+3 Cards. Put a card from your hand on top of your deck."
 	cost = 2
 	action = True
 	def __init__(self):
@@ -48,15 +50,8 @@ class Courtyard(KingdomCard):
 	def playCard(self, player, roster, deck):
 		self.player = player
 		self.hasActions = False
-		self.draw = 3
-		for i in draw:
-			if len(self.player.playerDeck) == 0:
-				self.player.playerDiscardToDeck()
-				self.player.playerHand.append(self.player.playerDeck[0])
-				del self.player.playerDeck[0]
-			else:
-				self.player.playerHand.append(self.player.playerDeck[0])
-				del self.player.playerDeck[0]		
+		for i in range(3):
+			self.player.drawOneCard()
 		
 		#choice = int(raw_input("      Choose a card to put on top of your deck: "))
 		self.send_data(self.player.playerConn, "Choose a card to put on top of your deck:\n")
@@ -73,7 +68,7 @@ class DukeCard(KingdomCard):
 	cardColor = "\033[32m"
 	description = "Worth 1 VP for each Duchy you have."
 	cost = 5
-	victoryPoints = 1 * self.
+	victoryPoints = 1 * self.deck.duchyCards
 	action = False
 	victory = True
 	def __init__(self):
@@ -85,38 +80,32 @@ class GreatHallCard(KingdomCard):
 	cardName = "Great Hall"
 	cardColor = "\033[32m"
 	#cardColor = "\033[0m"
+	description = "+1 Card, +1 Action."
 	victoryPoints = 1	
 	cost = 3
 	victory = True
 	action = True
-
 	def __init__(self):
 		pass
 
 	def playCard(self, player, roster, deck):
 		self.player = player
 		self.deck = deck
+		self.player.drawOneCard()
 		self.player.playerTurnActions += 1
-		if len(self.player.playerDeck) == 0:
-			self.player.playerDiscardToDeck()
-			self.player.playerHand.append(self.player.playerDeck[0])
-			del self.player.playerDeck[0]
-		else:
-			self.player.playerHand.append(self.player.playerDeck[0])
-			del self.player.playerDeck[0]		
+
 
 class HaremCard(KingdomCard):
 	#cardSet = "Intrigue"
 	cardEval = "HaremCard"
 	cardName = "Harem"
 	cardColor = "\033[32m"
-	#cardColor = "\033[0m"
+	#cardColor = "\033[33m"
 	victoryPoints = 2	
 	cost = 6
 	value = 2
 	victory = True
 	treasure = True
-
 	def __init__(self):
 		pass
 			
@@ -178,16 +167,10 @@ class IronWorksCard(KingdomCard):
 					self.player.playerTurnActions += 1
 					break
 				elif choice.cardType == "treasure":
-					self.player.playerTurnTreasure += 4
+					self.player.playerTurnTreasure += 1
 					break
 				elif choice.cardType == "victory":
-					if len(self.player.playerDeck) == 0:
-						self.player.playerDiscardToDeck()
-						self.player.playerHand.append(self.player.playerDeck[0])
-						del self.player.playerDeck[0]
-					else:
-						self.player.playerHand.append(self.player.playerDeck[0])
-						del self.player.playerDeck[0]
+					self.player.drawOneCard()
 					break
 			break
 			return
@@ -197,7 +180,7 @@ class MiningVillageCard(KingdomCard):
 	cardEval = "MiningVillageCard"
 	cardName = "Mining Village"
 	cardColor = "\033[0m"
-	description = "You may trash this card immediately, If you do, +2 Coins."
+	description = "+1 Card, +2 Actions. You may trash this card immediately, If you do, +2 Coins."
 	cost = 4
 	action = True
 	def __init__(self):
@@ -205,34 +188,34 @@ class MiningVillageCard(KingdomCard):
 
 	def playCard(self, player, roster, deck):
 		self.player = player
-		if len(self.player.playerDeck) == 0:
-			self.player.playerDiscardToDeck()
-			self.player.playerHand.append(self.player.playerDeck[0])
-			del self.player.playerDeck[0]
-		else:
-			self.player.playerHand.append(self.player.playerDeck[0])
-			del self.player.playerDeck[0]
+		self.player.drawOneCard()
 		self.player.playerTurnActions += 2
 
-		choice = raw_input(" Would you like to trash Mining Village (y/n)? ")
-		if choice.lower() == 'y':
-			while True:
-				for card in self.player.playerHand:
-				if card.cardName == 'Mining Village':
-					self.player.playerHand.remove(card)
-					self.player.playerTurnTreasure += 2
-					break
-				else:
-					continue
-		else:
-			break
-			return
+		while True:
+			self.send_data(self.player.playerConn, "Would you like to trash Mining Village? (y/n)\n")
+			choice = self.recv_data(self.player.playerConn, 1024)
+			if choice.lower() not in ['y', 'n']:
+				continue
+			elif choice.lower() == 'y':
+				while True:
+					for card in self.player.playerHand:
+					if card.cardName == 'Mining Village':
+						self.player.playerHand.remove(card)
+						self.player.playerTurnTreasure += 2
+						break
+					else:
+						continue
+				break
+			elif choice.lower() == 'n':
+				break
+
+		return
 
 class MinionCard(KingdomCard):
 	cardEval = "MinionCard"
 	cardName = "Minion"
 	cardColor = "\033[1;31m"
-	description = "Choose one: +2 Coins, or discard your hand, +4 cards, and each other player with at least 5 cards in hand discards his hand and draws 4 cards."
+	description = "+1 Action. Choose one: +2 Coins, or discard your hand, +4 cards, and each other player with at least 5 cards in hand discards his hand and draws 4 cards."
 	cost = 5
 	action = True
 	attack = True
@@ -255,15 +238,9 @@ class MinionCard(KingdomCard):
 				for i in len(self.player.playerHand):
 					self.player.playerDiscard.append(self.player.playerHand[i])
 					del self.player.playerHand[i]
-				self.draw = 4
-				for i in draw:
-					if len(self.player.playerDeck) == 0:
-						self.player.playerDiscardToDeck()
-						self.player.playerHand.append(self.player.playerDeck[0])
-						del self.player.playerDeck[0]
-					else:
-						self.player.playerHand.append(self.player.playerDeck[0])
-						del self.player.playerDeck[0]		
+
+				for i in range(4):
+					self.player.drawOneCard()
 
 				self.player.checkReactions('attack')
 				for each in self.roster:
@@ -273,15 +250,9 @@ class MinionCard(KingdomCard):
 							for i in len(self.player.playerHand):
 								each.player.playerDiscard.append(each.player.playerHand[i])
 								del each.player.playerHand[i]
-							each.draw = 4
-							for i in draw:
-								if len(each.player.playerDeck) == 0:
-									each.player.playerDiscardToDeck()
-									each.player.playerHand.append(each.player.playerDeck[0])
-									del each.player.playerDeck[0]
-								else:
-									each.player.playerHand.append(each.player.playerDeck[0])
-									del each.player.playerDeck[0]		
+
+							for i in range(4):
+								each.player.drawOneCard()
 
 				for each in self.roster:
 					each.reactionImmunity = False
@@ -299,7 +270,6 @@ class NoblesCard(KingdomCard):
 	cost = 6
 	victory = True
 	action = True
-
 	def __init__(self):
 		pass
 
@@ -312,15 +282,8 @@ class NoblesCard(KingdomCard):
 			if discard.lower() not in ['c', 'a']:
 				raw_input("That is not an available option, please choose (c)ards or (a)ctions! ")
 			elif discard.lower() == 'c':
-				self.draw = 3
-				for i in draw:
-					if len(self.player.playerDeck) == 0:
-						self.player.playerDiscardToDeck()
-						self.player.playerHand.append(self.player.playerDeck[0])
-						del self.player.playerDeck[0]
-					else:
-						self.player.playerHand.append(self.player.playerDeck[0])
-						del self.player.playerDeck[0]		
+				for i in range(3):
+					self.player.drawOneCard()
 				break
 			elif discard.lower() == 'a':
 				self.player.playerTurnActions += 2
@@ -334,7 +297,6 @@ class PawnCard(KingdomCard):
 	description = "Choose two: +1 Card, +1 Action, +1 Buy, +1 Coin. (The choices must be different)"
 	cost = 2
 	action = True
-
 	def __init__(self):
 		pass
 
@@ -349,22 +311,17 @@ class PawnCard(KingdomCard):
 				choice = ''
 				continue
 			elif choice.lower() == 'c':
-				if len(self.player.playerDeck) == 0:
-					self.player.playerDiscardToDeck()
-					self.player.playerHand.append(self.player.playerDeck[0])
-					del self.player.playerDeck[0]
-				else:
-					self.player.playerHand.append(self.player.playerDeck[0])
-					del self.player.playerDeck[0]		
+				self.player.drawOneCard()
+				break
 			elif choice.lower() == 'a':
 				self.player.playerTurnActions += 1
+				break				
 			elif choice.lower() == 'b':
 				self.player.playerTurnBuys += 1
+				break				
 			elif choice.lower() == 'o':
 				self.player.playerTurnTreasure += 1
-			
-			if len(choice) > 0: 
-				break
+				break				
 		
 		while True:
 			if choice = 'c':
@@ -394,13 +351,7 @@ class PawnCard(KingdomCard):
 
 			if len(choice2) > 0: 
 				if choice2.lower() == 'c':
-					if len(self.player.playerDeck) == 0:
-						self.player.playerDiscardToDeck()
-						self.player.playerHand.append(self.player.playerDeck[0])
-						del self.player.playerDeck[0]
-					else:
-						self.player.playerHand.append(self.player.playerDeck[0])
-						del self.player.playerDeck[0]		
+					self.player.drawOneCard()
 				elif choice2.lower() == 'a':
 					self.player.playerTurnActions += 1
 				elif choice2.lower() == 'b':
@@ -414,7 +365,7 @@ class ShantyTownCard(KingdomCard):
 	cardEval = "ShantyTownCard"
 	cardName = "Shanty Town"
 	cardColor = "\033[0m"
-	description = "Reveal your hand. If you have no actions cards in hand, +2 Cards."
+	description = "+2 Actions. Reveal your hand. If you have no actions cards in hand, +2 Cards."
 	cost = 3
 	action = True
 	def __init__(self):
@@ -429,23 +380,13 @@ class ShantyTownCard(KingdomCard):
 			if card.cardType == 'Action':
 				self.hasActions = True
 				break
-			else:
-				continue
 		break
 
-		if self.hasActions:
-			break
-		else:
-			self.draw = 2
-			for i in draw:
-				if len(self.player.playerDeck) == 0:
-					self.player.playerDiscardToDeck()
-					self.player.playerHand.append(self.player.playerDeck[0])
-					del self.player.playerDeck[0]
-				else:
-					self.player.playerHand.append(self.player.playerDeck[0])
-					del self.player.playerDeck[0]		
-			return
+		if not self.hasActions:
+			for i in range(2):
+				self.player.drawOneCard()
+			
+		return
 			
 class StewardCard(KingdomCard):
 	#cardSet = "Intrigue"
@@ -455,7 +396,6 @@ class StewardCard(KingdomCard):
 	description = "Choose one: +2 cards, or +2 Coins, or trash 2 cards from your hand."
 	cost = 3
 	action = True
-
 	def __init__(self):
 		pass
 
@@ -470,15 +410,8 @@ class StewardCard(KingdomCard):
 				choice = ''
 				continue
 			elif choice.lower() == 'c':
-				self.draw = 2
-				for i in draw:
-					if len(self.player.playerDeck) == 0:
-						self.player.playerDiscardToDeck()
-						self.player.playerHand.append(self.player.playerDeck[0])
-						del self.player.playerDeck[0]
-					else:
-						self.player.playerHand.append(self.player.playerDeck[0])
-						del self.player.playerDeck[0]
+				for i in range(2):
+					self.player.drawOneCard()
 				break
 			elif choice.lower() == 'o':
 				self.player.playerTurnTreasure += 2
@@ -505,7 +438,6 @@ class TradingPost(KingdomCard):
 	description = "Trash 2 cards from your hand. If you do, gain a Silver card, put it into your hand."
 	cost = 5
 	action = True
-
 	def __init__(self):
 		pass
 
@@ -546,7 +478,7 @@ class UpgradeCard(KingdomCard):
 	cardEval = "UpgradeCard"
 	cardName = "Upgrade"
 	cardColor = "\033[0m"
-	description = "Trash a card form your hand. Gain a card costing exactly 1 Coin more than it."
+	description = "+1 Card, +1 Action. Trash a card form your hand. Gain a card costing exactly 1 Coin more than it."
 	cost = 5
 	action = True
 	def __init__(self):
@@ -555,14 +487,8 @@ class UpgradeCard(KingdomCard):
 	def playCard(self, player, roster, deck):
 		self.player = player
 		self.deck = deck
+		self.player.drawOneCard()
 		self.player.playerTurnActions += 1
-		if len(self.player.playerDeck) == 0:
-			self.player.playerDiscardToDeck()
-			self.player.playerHand.append(self.player.playerDeck[0])
-			del self.player.playerDeck[0]
-		else:
-			self.player.playerHand.append(self.player.playerDeck[0])
-			del self.player.playerDeck[0]		
 
 		if len(self.player.playerHand) > 0:
 			while True:
@@ -580,16 +506,18 @@ class WishingWellCard(KingdomCard):
 	cardEval = "WishingWellCard"
 	cardName = "Wishing Well"
 	cardColor = "\033[0m"
-	description = "Name a card. Reveal the top card of your deck. If it’s the named card, put it into your hand."
+	description = "+1 Card, +1 Action. Name a card. Reveal the top card of your deck. If it’s the named card, put it into your hand."
 	cost = 3
 	action = True
 	def __init__(self):
 		pass
 
-		def playCard(self, player, roster, deck):
+	def playCard(self, player, roster, deck):
 		self.player = player
 		self.deck = deck
+		self.player.drawOneCard()
 		self.player.playerTurnActions += 1
+
 		if len(self.player.playerDeck) == 0:
 			self.player.playerDiscardToDeck()
 			self.player.playerHand.append(self.player.playerDeck[0])
@@ -638,7 +566,6 @@ class WishingWellCard(KingdomCard):
 					del self.player.playerDeck[0]
 					break
 			break
-
 			
 		
 
